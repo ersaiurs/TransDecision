@@ -1,15 +1,7 @@
 "use client";
 
 import Layout from "@/components/Layout";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  useMap,
-} from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -21,52 +13,22 @@ import {
 // Import konfigurasi Firestore & fungsi penyimpan data
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import dynamic from "next/dynamic";
 
+const MapAlternatif = dynamic(() => import("@/components/MapAlternatif"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[400px] w-full flex items-center justify-center bg-slate-100 text-slate-500 font-medium">
+      🗺️ Memuat Peta...
+    </div>
+  ),
+});
 // ======================================================
 // GEOAPIFY API KEY
 // ======================================================
 
 const GEOAPIFY_API_KEY = process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY || "";
 
-// ======================================================
-// MARKER ICON
-// ======================================================
-
-const originMarkerIcon = new L.Icon({
-  iconUrl:
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
-  shadowUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
-
-const destinationMarkerIcon = new L.Icon({
-  iconUrl:
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
-  shadowUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
-
-// ======================================================
-// MAP AUTO MOVE
-// ======================================================
-
-function ChangeMap({ center }: { center: [number, number] }) {
-  const map = useMap();
-
-  useEffect(() => {
-    map.setView(center, 13);
-  }, [center, map]);
-
-  return null;
-}
 
 // ======================================================
 // TIPE HASIL GEOAPIFY
@@ -606,39 +568,13 @@ export default function Alternatif() {
 
         {/* MAP */}
         <div className="border rounded-2xl overflow-hidden shadow-inner relative z-10">
-          <MapContainer
-            center={position}
-            zoom={13}
-            className="z-0"
-            style={{ height: "400px", width: "100%" }}
-          >
-            <ChangeMap center={position} />
-            <TileLayer
-              attribution='Powered by <a href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer">Geoapify</a> | &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url={`https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=${GEOAPIFY_API_KEY}`}
-              maxZoom={20}
-            />
-
-            {originCoord && (
-              <Marker position={originCoord} icon={originMarkerIcon}>
-                <Popup>
-                  <strong className="text-red-600">📍 Lokasi Asal</strong>
-                  <br />
-                  {origin}
-                </Popup>
-              </Marker>
-            )}
-
-            {destinationCoord && (
-              <Marker position={destinationCoord} icon={destinationMarkerIcon}>
-                <Popup>
-                  <strong className="text-blue-600">🏁 Lokasi Tujuan</strong>
-                  <br />
-                  {destination}
-                </Popup>
-              </Marker>
-            )}
-          </MapContainer>
+          <MapAlternatif
+  position={position}
+  originCoord={originCoord}
+  destinationCoord={destinationCoord}
+  origin={origin}
+  destination={destination}
+/>
         </div>
 
         {/* BUTTON CARI REKOMENDASI */}

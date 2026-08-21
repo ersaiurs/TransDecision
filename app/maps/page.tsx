@@ -5,57 +5,20 @@ import { useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import { ArrowLeft, MapPin, Navigation, Trophy, Train, Zap } from "lucide-react";
 
-// Import Leaflet & React-Leaflet
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
 
 // Mengimpor tipe data dari lib/saw.ts
 import { DetailTransportasi } from "@/lib/saw";
+import dynamic from "next/dynamic";
 
-// ==========================================
-// DEFINISI IKON CUSTOM LEAFLET
-// ==========================================
-const originMarkerIcon = new L.Icon({
-  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+const MapMain = dynamic(() => import("@/components/MapMain"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full w-full flex items-center justify-center bg-slate-100 text-slate-500 font-medium">
+      🗺️ Memuat Peta...
+    </div>
+  ),
 });
 
-const destinationMarkerIcon = new L.Icon({
-  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
-
-// Ikon khusus Stasiun / Transit (Lingkaran Kuning + Emoji Kereta)
-const transitMarkerIcon = new L.DivIcon({
-  className: "custom-transit-marker",
-  html: `<div style="background-color: #f59e0b; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">🚉</div>`,
-  iconSize: [34, 34],
-  iconAnchor: [17, 17],
-  popupAnchor: [0, -18],
-});
-
-// ==========================================
-// KOMPONEN AUTO FIT BOUNDS PETA
-// ==========================================
-function FitBounds({ positions }: { positions: [number, number][] }) {
-  const map = useMap();
-  useEffect(() => {
-    if (positions.length > 0) {
-      const bounds = L.latLngBounds(positions);
-      map.fitBounds(bounds, { padding: [50, 50] });
-    }
-  }, [positions, map]);
-  return null;
-}
 
 export default function MapsPage() {
   const router = useRouter();
@@ -367,67 +330,14 @@ export default function MapsPage() {
 
             {/* CONTAINER PETA LEAFLET */}
             <div className="flex-1 rounded-2xl border border-slate-200 relative overflow-hidden">
-              <MapContainer
-                center={coords.origin || [-6.2, 106.816666]}
-                zoom={12}
-                style={{ height: "100%", width: "100%" }}
-                className="z-0"
-              >
-                <TileLayer
-                  attribution='Powered by <a href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer">Geoapify</a> | &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>'
-                  url={`https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=${GEOAPIFY_API_KEY}`}
-                  maxZoom={20}
-                />
-
-                {allMarkerPositions.length > 0 && <FitBounds positions={allMarkerPositions} />}
-
-                {/* HANYA GARIS TRACK RUTE RANK #1 (POLYLINE) */}
-                {routeGeometry.length > 0 && (
-                  <Polyline
-                    positions={routeGeometry}
-                    pathOptions={{
-                      color: "#0284c7",
-                      weight: 6,
-                      opacity: 0.85,
-                      lineCap: "round",
-                      lineJoin: "round",
-                    }}
-                  />
-                )}
-
-                {/* MARKER ASAL */}
-                {coords.origin && (
-                  <Marker position={coords.origin} icon={originMarkerIcon}>
-                    <Popup>
-                      <strong className="text-red-600">📍 Titik Awal</strong>
-                      <br />
-                      {infoRute.asal || "Lokasi Awal"}
-                    </Popup>
-                  </Marker>
-                )}
-
-                {/* MARKER TRANSIT */}
-                {hasTransit && coords.transit && (
-                  <Marker position={coords.transit} icon={transitMarkerIcon}>
-                    <Popup>
-                      <strong className="text-amber-600">🚉 Stasiun / Titik Transit</strong>
-                      <br />
-                      {infoRute.transitName || "Titik Transit"}
-                    </Popup>
-                  </Marker>
-                )}
-
-                {/* MARKER TUJUAN */}
-                {coords.destination && (
-                  <Marker position={coords.destination} icon={destinationMarkerIcon}>
-                    <Popup>
-                      <strong className="text-blue-600">🏁 Titik Tujuan</strong>
-                      <br />
-                      {infoRute.tujuan || "Lokasi Tujuan"}
-                    </Popup>
-                  </Marker>
-                )}
-              </MapContainer>
+            <MapMain
+  coords={coords}
+  infoRute={infoRute}
+  routeGeometry={routeGeometry}
+  allMarkerPositions={allMarkerPositions}
+  hasTransit={hasTransit}
+  apiKey={GEOAPIFY_API_KEY}
+/>
             </div>
           </div>
         </div>
